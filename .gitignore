@@ -1,0 +1,5 @@
+# Don't track Jupyter checkpoint files
+.ipynb_checkpoints/
+
+# Ignore CSVs or large data files 
+*.csv
