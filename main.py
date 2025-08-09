@@ -68,7 +68,9 @@ import matplotlib.pyplot as plt
 # data_us_sample = data[data["region"] == "United States"].copy()
 # data_us_sample.to_csv("./data/spotify_us_cleaned.csv", index=False)
 
-# ========== DATABASE PRACTICE =========
+
+# ========== DATABASE INITIALIZATION =========
+
 import sqlite3
 import pathlib
 import os
@@ -106,6 +108,7 @@ top_artists['total_streams'] = (
     top_artists['total_streams'].apply(lambda x: f"{x:,.0f}")
 )
 print(f"TOP 10 ARTISTS IN US:\n{top_artists}")
+
 
 # ========== ANSWERING MEANINGFUL QUESTIONS ==========
 
