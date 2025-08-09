@@ -102,6 +102,60 @@ LIMIT 10
 
 # execute the query and print to console
 top_artists = pd.read_sql_query(query, con)
-print(f"TOP 10 ARTISTS:\n{top_artists}")
+top_artists['total_streams'] = (
+    top_artists['total_streams'].apply(lambda x: f"{x:,.0f}")
+)
+print(f"TOP 10 ARTISTS IN US:\n{top_artists}")
+
+# ========== ANSWERING MEANINGFUL QUESTIONS ==========
+
+# Which day had the highest total streams in the US?
+query = """
+SELECT chart_date, SUM(daily_streams) as total_streams
+FROM spotify_us
+GROUP BY chart_date
+ORDER BY total_streams DESC
+LIMIT 10
+"""
+
+highest_streamed_dates = pd.read_sql_query(query, con)
+highest_streamed_dates['total_streams'] = (
+    highest_streamed_dates['total_streams'].apply(lambda x: f"{x:,.0f}")
+)
+print(f"TOP 10 HIGHEST STREAMING DAYS IN US:\n{highest_streamed_dates}")
+
+# What's the average daily streams for each chart position (rank)?
+query = """
+SELECT rank, AVG(daily_streams) as average_daily_streams
+FROM spotify_us
+GROUP BY rank
+ORDER BY rank ASC
+LIMIT 10
+"""
+
+average_daily_streams_by_rank = pd.read_sql_query(query, con)
+average_daily_streams_by_rank['average_daily_streams'] = (
+    average_daily_streams_by_rank['average_daily_streams']
+    .apply(lambda x: f"{x:,.0f}")
+)
+print(f"AVERAGE DAILY STREAMS BY RANK:\n{average_daily_streams_by_rank}")
+
+# Which 10 tracks stayed in the top 10 the longest (cumulative)?
+query = """
+WITH weekly AS (
+    SELECT DISTINCT track_title, strftime('%Y-%W', chart_date) as year_week
+    FROM spotify_us
+    WHERE rank <= 10
+)
+SELECT track_title, COUNT(DISTINCT year_week) AS weeks_in_top_10
+FROM weekly
+GROUP BY track_title
+ORDER BY weeks_in_top_10 DESC
+LIMIT 10
+"""
+
+cum_weeks_in_top_10 = pd.read_sql_query(query, con)
+print(f"TOP 5 CUMULATIVE WEEKS IN TOP 10 IN THE US:\n{cum_weeks_in_top_10}")
+
 
 con.close()
