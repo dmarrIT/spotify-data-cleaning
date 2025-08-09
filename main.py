@@ -158,7 +158,7 @@ LIMIT 10
 """
 
 cum_weeks_in_top_10 = pd.read_sql_query(query, con)
-print(f"TOP 5 CUMULATIVE WEEKS IN TOP 10 IN THE US:\n{cum_weeks_in_top_10}")
+print(f"TOP 10 CUMULATIVE WEEKS IN TOP 10 IN THE US:\n{cum_weeks_in_top_10}")
 
 
 con.close()
