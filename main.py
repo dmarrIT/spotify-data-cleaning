@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import pathlib
 
 # ========== CLEANING PHASE (COMMENTED OUT AFTER EXECUTION) ===========
 
@@ -47,7 +48,8 @@ import matplotlib.pyplot as plt
 # plt.ylabel("Song Title")
 # plt.gca().invert_yaxis()  # Puts the highest at the top
 # plt.tight_layout()
-# plt.savefig("top_songs.png", dpi=300)
+# pathlib.Path("./plots").mkdir(parents=True, exist_ok=True)
+# plt.savefig("./plots/top_songs.png", dpi=300)
 
 # # top 10 artists in the US
 # # print("Top 10 Artists in the US:")
@@ -62,18 +64,24 @@ import matplotlib.pyplot as plt
 # plt.ylabel("Artist")
 # plt.gca().invert_yaxis()
 # plt.tight_layout()
-# plt.savefig("top_artists_us.png", dpi=300)
+# plt.savefig("./plots/top_artists_us.png", dpi=300)
 
 # # export cleaned version of US only data
 # data_us_sample = data[data["region"] == "United States"].copy()
+# pathlib.Path("./data").mkdir(parents=True, exist_ok=True)
 # data_us_sample.to_csv("./data/spotify_us_cleaned.csv", index=False)
 
 
 # ========== DATABASE INITIALIZATION =========
 
 import sqlite3
-import pathlib
-import os
+
+# function for formatting commas
+def fmt_commas(df, cols):
+    for c in cols:
+        if c in df.columns:
+            df[c] = df[c].apply(lambda x: f"{x:,.0f}")
+    return df
 
 
 # create db after checking to make sure db folder exists
@@ -82,7 +90,13 @@ con = sqlite3.connect("db/spotify.db")
 
 # read in cleaned data and add to db
 data = pd.read_csv("./data/spotify_us_cleaned.csv")
+data["chart_date"] = pd.to_datetime(data["chart_date"], errors="coerce")
+data["daily_streams"] = pd.to_numeric(data["daily_streams"], errors="coerce")
 data.to_sql("spotify_us", con, if_exists="replace", index=False)
+con.execute("CREATE INDEX IF NOT EXISTS idx_artist ON spotify_us(artist_name)")
+con.execute("CREATE INDEX IF NOT EXISTS idx_date ON spotify_us(chart_date)")
+con.execute("CREATE INDEX IF NOT EXISTS idx_rank ON spotify_us(rank)")
+con.commit()
 # print(data.shape)
 # print(list(data.columns)[:10])
 
@@ -93,7 +107,7 @@ data.to_sql("spotify_us", con, if_exists="replace", index=False)
 # for col in schema:
 #     print(col)
 
-# create query to get the top 10 arists by total streams grouped by artist name from the db
+# create query to get the top 10 arists by total streams grouped by artist name from the db, US only
 query = """
 SELECT artist_name, SUM(daily_streams) as total_streams
 FROM spotify_us
@@ -104,9 +118,7 @@ LIMIT 10
 
 # execute the query and print to console
 top_artists = pd.read_sql_query(query, con)
-top_artists['total_streams'] = (
-    top_artists['total_streams'].apply(lambda x: f"{x:,.0f}")
-)
+top_artists = fmt_commas(top_artists, ['total_streams'])
 print(f"TOP 10 ARTISTS IN US:\n{top_artists}")
 
 
@@ -122,12 +134,15 @@ LIMIT 10
 """
 
 highest_streamed_dates = pd.read_sql_query(query, con)
-highest_streamed_dates['total_streams'] = (
-    highest_streamed_dates['total_streams'].apply(lambda x: f"{x:,.0f}")
-)
-print(f"TOP 10 HIGHEST STREAMING DAYS IN US:\n{highest_streamed_dates}")
+highest_streamed_dates = fmt_commas(highest_streamed_dates, ['total_streams'])
 
-# What's the average daily streams for each chart position (rank)?
+pathlib.Path("./exports").mkdir(parents=True, exist_ok=True)
+
+# save query results to csv in exports folder
+highest_streamed_dates.to_csv("./exports/streams_by_day_us.csv", index=False)
+
+
+# What's the average daily streams for each chart position (rank)? US only
 query = """
 SELECT rank, AVG(daily_streams) as average_daily_streams
 FROM spotify_us
@@ -137,11 +152,10 @@ LIMIT 10
 """
 
 average_daily_streams_by_rank = pd.read_sql_query(query, con)
-average_daily_streams_by_rank['average_daily_streams'] = (
-    average_daily_streams_by_rank['average_daily_streams']
-    .apply(lambda x: f"{x:,.0f}")
-)
-print(f"AVERAGE DAILY STREAMS BY RANK:\n{average_daily_streams_by_rank}")
+average_daily_streams_by_rank = fmt_commas(average_daily_streams_by_rank, ['average_daily_streams'])
+# save query results to csv in exports folder
+average_daily_streams_by_rank.to_csv("./exports/avg_streams_by_rank_us.csv", index=False)
+
 
 # Which 10 tracks stayed in the top 10 the longest (cumulative)?
 query = """
@@ -157,8 +171,9 @@ ORDER BY weeks_in_top_10 DESC
 LIMIT 10
 """
 
-cum_weeks_in_top_10 = pd.read_sql_query(query, con)
-print(f"TOP 10 CUMULATIVE WEEKS IN TOP 10 IN THE US:\n{cum_weeks_in_top_10}")
+weeks_in_top_10 = pd.read_sql_query(query, con)
+# save query results to csv in exports folder
+weeks_in_top_10.to_csv("./exports/weeks_in_top10_us.csv", index=False)
 
 
 con.close()

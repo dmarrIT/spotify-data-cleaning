@@ -1,5 +1,35 @@
-# Don't track Jupyter checkpoint files
-.ipynb_checkpoints/
+# OS stuff
+.DS_Store
+Thumbs.db
 
-# Ignore CSVs or large data files 
-*.csv
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.env
+.venv
+env/
+venv/
+
+# Jupyter checkpoints
+.ipynb_checkpoints
+
+# Data files
+data/*.csv
+!data/spotify_us_cleaned.csv   # allow cleaned file
+
+# Large raw files
+*.zip
+*.tar
+*.gz
+*.bz2
+
+# SQLite database
+db/*.db
+db/*.sqlite
+
+# IDE/project files
+.vscode/
+.idea/
