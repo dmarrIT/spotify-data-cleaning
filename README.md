@@ -28,3 +28,4 @@ It can be downloaded from https://www.kaggle.com/datasets/dhruvildave/spotify-ch
     - What day had the highest total streams in the US?
     - What is the average daily streams for each chart position (rank)?
     - Which 10 tracks stayed in the top 10 the longest (cumulative)?
+- Exported query results to CSVs
