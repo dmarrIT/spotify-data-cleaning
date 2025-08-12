@@ -77,10 +77,13 @@ import pathlib
 import sqlite3
 
 # function for formatting commas
-def fmt_commas(df, cols):
+def fmt_commas(df, cols, decimals=0):
     for c in cols:
         if c in df.columns:
-            df[c] = df[c].apply(lambda x: f"{x:,.0f}")
+            df[c] = pd.to_numeric(df[c], errors="coerce")  # Ensure numeric
+            df[c] = df[c].apply(
+                lambda x: f"{x:,.{decimals}f}" if pd.notnull(x) else ""
+            )
     return df
 
 
